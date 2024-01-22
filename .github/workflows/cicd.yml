@@ -1,4 +1,4 @@
-name: CICD
+name: CI/CD
 
 on:
   push:
@@ -6,31 +6,41 @@ on:
 
 jobs:
   build:
-    runs-on: [ubuntu-latest]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout source
         uses: actions/checkout@v3
-      - name: Setup Java
+
+      - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
       - name: Build Project
-        run: mvn clean install -DskipTests
-      - name: Login to docker hub
-        run: docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
-      - name: Build docker image
+        run: ./gradlew build -x test
+
+      - name: Login to Docker Hub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker Image
         run: docker build -t integrationninjas/springboot-example .
-      - name: Publish image to docker hub
+
+      - name: Publish Image to Docker Hub
         run: docker push integrationninjas/springboot-example:latest
 
   deploy:
     needs: build
-    runs-on: [ip-172-31-8-60]
+    runs-on: ip-172-31-8-60
     steps:
-      - name: Pull Image from docker hub
+      - name: Pull Image from Docker Hub
         run: docker pull integrationninjas/springboot-example:latest
-      - name: Delete old container
-        run: docker rm -f springboot-example-container
-      - name: Run docker container
+
+      - name: Delete Old Container
+        run: docker rm -f springboot-example-container || true
+
+      - name: Run Docker Container
         run: docker run -d -p 8080:8080 --name springboot-example-container integrationninjas/springboot-example
