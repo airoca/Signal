@@ -34,13 +34,11 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: [aws-ec2]
+    runs-on: [ aws-ec2 ]
     steps:
-      - name: Pull Image from Docker Hub
+      - name: Pull Image from docker hub
         run: docker pull yh0872/springboot-example:latest
-
-      - name: Delete Old Container
-        run: docker rm -f springboot-example-container || true
-
-      - name: Run Docker Container
+      - name: Delete old container
+        run: docker rm -f springboot-example-container
+      - name: Run docker container
         run: docker run -d -p 8080:8080 --name springboot-example-container yh0872/springboot-example
