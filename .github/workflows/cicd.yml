@@ -27,20 +27,20 @@ jobs:
         run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build Docker Image
-        run: docker build -t madurad/springboot-example .
+        run: docker build -t yh0872/springboot-example .
 
       - name: Publish Image to Docker Hub
-        run: docker push madurad/springboot-example:latest
+        run: docker push yh0872/springboot-example:latest
 
   deploy:
     needs: build
     runs-on: ip-172-31-8-60
     steps:
       - name: Pull Image from Docker Hub
-        run: docker pull madurad/springboot-example:latest
+        run: docker pull yh0872/springboot-example:latest
 
       - name: Delete Old Container
         run: docker rm -f springboot-example-container || true
 
       - name: Run Docker Container
-        run: docker run -d -p 8080:8080 --name springboot-example-container madurad/springboot-example
+        run: docker run -d -p 8080:8080 --name springboot-example-container yh0872/springboot-example
