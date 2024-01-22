@@ -15,8 +15,7 @@ import com.example.sign.repository.SingleSignalRepository;
 import com.example.sign.repository.DoubleSignalRepository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class UserService {
@@ -41,15 +40,23 @@ public class UserService {
     // 회원 가입 메서드 수정
     public User registerUser(User newUser) {
         newUser.setPassword(passwordEncoder.encode(newUser.getPassword()));
+        assignRandomColor(newUser);
         return userRepository.save(newUser);
     }
 
     // 로그인 메서드 수정
-    public JwtToken loginUser(String id, String password) {
-        return userRepository.findById(id)
-                .filter(user -> passwordEncoder.matches(password, user.getPassword()))
-                .map(user -> jwtTokenProvider.generateToken(new UsernamePasswordAuthenticationToken(id, null)))
+    public Map<String, Object> loginUser(String id, String password) {
+        User user = userRepository.findById(id)
+                .filter(u -> passwordEncoder.matches(password, u.getPassword()))
                 .orElseThrow(() -> new RuntimeException("로그인 실패"));
+
+        JwtToken jwtToken = jwtTokenProvider.generateToken(new UsernamePasswordAuthenticationToken(id, null));
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("user", user);
+        response.put("token", jwtToken);
+
+        return response;
     }
 
     public void assignRandomCoordinates(User user) {
@@ -94,12 +101,17 @@ public class UserService {
         return true;
     }
 
+    // 색상 할당 메서드
+    private void assignRandomColor(User user) {
+        String[] colors = {"#88beff", "white", "#f9d397", "#fd6b6b", "#ffffac"};
+        Random rand = new Random();
+        String randomColor = colors[rand.nextInt(colors.length)];
+        user.setColor(randomColor);
+    }
+
     public Optional<User> getUserById(String id) {
         return userRepository.findById(id);
     }
-
-    //Single Signal
-    // UserService 클래스 내
 
     @Transactional
     public void sendSignal(SingleSignal singleSignal) {
@@ -130,5 +142,33 @@ public class UserService {
 
     }
 
+    @Transactional
+    public void removeSignal(String senderId, String receiverId) {
+        // 쌍방적인 시그널이 있는지 확인
+        boolean isDoubleSignal = doubleSignalRepository.existsByUser1AndUser2(senderId, receiverId)
+                || doubleSignalRepository.existsByUser1AndUser2(receiverId, senderId);
+
+        User affectedUser = userRepository.findById(receiverId)
+                .orElseThrow(() -> new RuntimeException("Receiver not found"));
+
+        // signal 감소
+        Integer currentSignals = affectedUser.getSignals();
+        affectedUser.setSignals((currentSignals == null || currentSignals <= 0) ? 0 : currentSignals - 1);
+        userRepository.save(affectedUser);
+
+        if (isDoubleSignal) {
+            // 쌍방적인 시그널을 삭제하고, single_signal 테이블에 새로운 정보 추가
+            doubleSignalRepository.deleteByUser1AndUser2(senderId, receiverId);
+            doubleSignalRepository.deleteByUser1AndUser2(receiverId, senderId);
+
+            SingleSignal newSingleSignal = new SingleSignal();
+            newSingleSignal.setSendUser(receiverId); // 삭제된 user가 send_user.
+            newSingleSignal.setReceiveUser(senderId); // 삭제한 user가 receive_user
+            singleSignalRepository.save(newSingleSignal);
+        } else {
+            // 일방적인 시그널을 단순히 삭제
+            singleSignalRepository.deleteBySendUserAndReceiveUser(senderId, receiverId);
+        }
+    }
 
 }

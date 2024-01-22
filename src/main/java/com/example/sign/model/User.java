@@ -37,4 +37,7 @@ public class User {
 
     //시그널 수
     private Integer signals;
+
+    //색상
+    private String color;
 }

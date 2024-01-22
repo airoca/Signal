@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import com.example.sign.model.SingleSignal;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 public class UserController {
@@ -30,10 +31,11 @@ public class UserController {
         return userService.registerUser(newUser);
     }
 
-    //로그인
+    // 로그인
     @PostMapping("/login")
-    public JwtToken loginUser(@RequestBody User loginDetails) {
-        return userService.loginUser(loginDetails.getId(), loginDetails.getPassword());
+    public ResponseEntity<?> loginUser(@RequestBody User loginDetails) {
+        Map<String, Object> response = userService.loginUser(loginDetails.getId(), loginDetails.getPassword());
+        return ResponseEntity.ok(response);
     }
 
     //특정 사용자 정보
@@ -49,5 +51,13 @@ public class UserController {
         userService.sendSignal(singleSignal);
         return ResponseEntity.ok().build();
     }
+
+    // 사용자가 다른 사용자에게 보낸 시그널 삭제
+    @PostMapping("/deleteSignal")
+    public ResponseEntity<?> deleteSignal(@RequestBody SingleSignal singleSignal) {
+        userService.removeSignal(singleSignal.getSendUser(), singleSignal.getReceiveUser());
+        return ResponseEntity.ok().build();
+    }
+
 
 }
