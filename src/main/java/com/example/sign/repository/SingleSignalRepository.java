@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Repository
 public interface SingleSignalRepository extends JpaRepository<SingleSignal, Long> {
 
@@ -14,4 +16,7 @@ public interface SingleSignalRepository extends JpaRepository<SingleSignal, Long
     @Transactional
     void deleteBySendUserAndReceiveUser(String sendUser, String receiveUser);
 
+    List<SingleSignal> findByReceiveUser(String userId);
+
+    List<SingleSignal> findBySendUser(String userId);
 }

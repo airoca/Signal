@@ -16,6 +16,7 @@ import com.example.sign.repository.DoubleSignalRepository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -132,9 +133,21 @@ public class UserService {
             singleSignalRepository.deleteBySendUserAndReceiveUser(
                     singleSignal.getReceiveUser(), singleSignal.getSendUser());
 
+            User user1 = userRepository.findById(singleSignal.getSendUser())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            User user2 = userRepository.findById(singleSignal.getReceiveUser())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
             DoubleSignal doubleSignal = new DoubleSignal();
-            doubleSignal.setUser1(singleSignal.getSendUser());
-            doubleSignal.setUser2(singleSignal.getReceiveUser());
+            doubleSignal.setUser1(user1.getId());
+            doubleSignal.setUser2(user2.getId());
+            doubleSignal.setUser1XCoordinate(user1.getX_coordinate());
+            doubleSignal.setUser1YCoordinate(user1.getY_coordinate());
+            doubleSignal.setUser1ZCoordinate(user1.getZ_coordinate());
+            doubleSignal.setUser2XCoordinate(user2.getX_coordinate());
+            doubleSignal.setUser2YCoordinate(user2.getY_coordinate());
+            doubleSignal.setUser2ZCoordinate(user2.getZ_coordinate());
+
             doubleSignalRepository.save(doubleSignal);
         } else {
             singleSignalRepository.save(singleSignal);
@@ -170,5 +183,51 @@ public class UserService {
             singleSignalRepository.deleteBySendUserAndReceiveUser(senderId, receiverId);
         }
     }
+
+    public List<User> getReceivedSignalUsers(String userId) {
+        Set<String> senderIds = new HashSet<>();
+
+        // single_signal 테이블에서 받은 신호
+        List<SingleSignal> receivedSingleSignals = singleSignalRepository.findByReceiveUser(userId);
+        senderIds.addAll(receivedSingleSignals.stream()
+                .map(SingleSignal::getSendUser)
+                .collect(Collectors.toSet()));
+
+        // double_signal 테이블에서 받은 신호
+        List<DoubleSignal> receivedDoubleSignals = doubleSignalRepository.findByUser1OrUser2(userId, userId);
+        for (DoubleSignal signal : receivedDoubleSignals) {
+            senderIds.add(signal.getUser1().equals(userId) ? signal.getUser2() : signal.getUser1());
+        }
+
+        return senderIds.stream()
+                .map(userRepository::findById)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+    }
+
+    public List<User> getSentSignalUsers(String userId) {
+        Set<String> receiverIds = new HashSet<>();
+
+        // single_signal 테이블에서 보낸 신호
+        List<SingleSignal> sentSingleSignals = singleSignalRepository.findBySendUser(userId);
+        receiverIds.addAll(sentSingleSignals.stream()
+                .map(SingleSignal::getReceiveUser)
+                .collect(Collectors.toSet()));
+
+        // double_signal 테이블에서 보낸 신호
+        List<DoubleSignal> sentDoubleSignals = doubleSignalRepository.findByUser1OrUser2(userId, userId);
+        for (DoubleSignal signal : sentDoubleSignals) {
+            receiverIds.add(signal.getUser1().equals(userId) ? signal.getUser2() : signal.getUser1());
+        }
+
+        return receiverIds.stream()
+                .map(userRepository::findById)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+    }
+
+
 
 }

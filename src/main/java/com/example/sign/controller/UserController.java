@@ -59,5 +59,18 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    // 특정 사용자가 받은 모든 신호에 대한 User
+    @GetMapping("/signals/received/{id}")
+    public ResponseEntity<List<User>> getReceivedSignals(@PathVariable("id") String id) {
+        List<User> receivedUsers = userService.getReceivedSignalUsers(id);
+        return ResponseEntity.ok(receivedUsers);
+    }
+
+    // 특정 사용자가 보낸 모든 신호에 대한 User
+    @GetMapping("/signals/sent/{id}")
+    public ResponseEntity<List<User>> getSentSignals(@PathVariable("id") String id) {
+        List<User> sentUsers = userService.getSentSignalUsers(id);
+        return ResponseEntity.ok(sentUsers);
+    }
 
 }
