@@ -1,5 +1,6 @@
 package com.example.sign.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import lombok.Getter;
@@ -33,4 +34,7 @@ public class User {
     private Float x_coordinate;
     private Float y_coordinate;
     private Float z_coordinate;
+
+    //시그널 수
+    private Integer signals;
 }
