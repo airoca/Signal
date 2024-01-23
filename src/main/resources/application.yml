@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://192.249.29.26:3306/sign
+    url: jdbc:mysql://192.249.29.56:3306/sign
     username: testuser
     password: rj7783208232
   jpa:
