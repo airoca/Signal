@@ -25,15 +25,26 @@ public class WebSocketChat {
     @OnOpen
     public void onOpen(Session session, @PathParam("user1") String user1, @PathParam("user2") String user2) {
 
-        //write code here
+        String roomId;
 
-        String roomId = RandomStringGenerator.generateRandomString();
-
-        Room room = new Room();
-        room.setRoomId(roomId);
-        room.setUser1(user1);
-        room.setUser2(user2);
-        roomRepository.save(room);
+        // user1과 user2에 해당하는 Room 엔티티를 찾는다.
+        Optional<Room> existingRoom = roomRepository.findByUser1AndUser2(user1, user2);
+        if(!existingRoom.isPresent()){
+            existingRoom = roomRepository.findByUser1AndUser2(user2, user1);
+        }
+        if (existingRoom.isPresent()) {
+            // 존재하는 경우, roomId를 가져온다.
+            roomId = existingRoom.get().getRoomId();
+            logger.info("There was existing roomId: {}", roomId);
+        } else {
+            // 존재하지 않는 경우, 새로운 Room을 생성한다.
+            roomId = RandomStringGenerator.generateRandomString();
+            Room room = new Room();
+            room.setRoomId(roomId);
+            room.setUser1(user1);
+            room.setUser2(user2);
+            roomRepository.save(room);
+        }
 
         sessionRoomMap.put(session, roomId);
         roomSessionMap.computeIfAbsent(roomId, k -> new HashSet<>()).add(session);
