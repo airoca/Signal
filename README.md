@@ -127,12 +127,12 @@ Signal 보내기 버튼을 누르면, 해당 사용자에게 signal이 전송되
     - javascript
     - axios
 
-**Backend**
-
--   spring boot
--   java
--   spring security
--   github actions
--   aws ec2
--   mysql
--   docker
+    **Backend**
+    
+    -   spring boot
+    -   java
+    -   spring security
+    -   github actions
+    -   aws ec2
+    -   mysql
+    -   docker
