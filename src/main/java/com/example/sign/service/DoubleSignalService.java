@@ -15,8 +15,6 @@ public class DoubleSignalService {
     @Autowired
     private DoubleSignalRepository doubleSignalRepository;
 
-    // UserService 클래스 내
-
     public List<DoubleSignalDTO> getAllLines() {
         return doubleSignalRepository.findAll().stream()
                 .map(ds -> {

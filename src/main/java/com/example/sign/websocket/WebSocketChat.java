@@ -21,23 +21,32 @@ public class WebSocketChat {
 
     @Autowired
     private RoomRepository roomRepository;
+    @Autowired
+    private RoomDetailRepository roomDetailRepository;
 
     @OnOpen
-    public void onOpen(Session session, @PathParam("user1") String user1, @PathParam("user2") String user2) {
-
+    public void onOpen(Session session, @PathParam("user1") String user1, @PathParam("user2") String user2) throws IOException {
         String roomId;
 
-        // user1과 user2에 해당하는 Room 엔티티를 찾는다.
+        // user1과 user2에 해당하는 Room
         Optional<Room> existingRoom = roomRepository.findByUser1AndUser2(user1, user2);
-        if(!existingRoom.isPresent()){
+        if (!existingRoom.isPresent()) {
             existingRoom = roomRepository.findByUser1AndUser2(user2, user1);
         }
         if (existingRoom.isPresent()) {
-            // 존재하는 경우, roomId를 가져온다.
             roomId = existingRoom.get().getRoomId();
             logger.info("There was existing roomId: {}", roomId);
+
+            // 해당 roomId의 모든 RoomDetail 데이터를 조회
+            List<RoomDetail> roomDetails = roomDetailRepository.findByRoomId(roomId);
+
+            // 조회된 모든 메시지를 현재 세션에 전송
+            for (RoomDetail roomDetail : roomDetails) {
+                String messageToSend = roomDetail.getMessage();
+                session.getBasicRemote().sendText(messageToSend);
+                logger.info("채팅 기록 반환: {}", messageToSend);
+            }
         } else {
-            // 존재하지 않는 경우, 새로운 Room을 생성한다.
             roomId = RandomStringGenerator.generateRandomString();
             Room room = new Room();
             room.setRoomId(roomId);
@@ -50,7 +59,6 @@ public class WebSocketChat {
         roomSessionMap.computeIfAbsent(roomId, k -> new HashSet<>()).add(session);
 
         logger.info("Session opened in room: {}", roomId);
-
     }
 
     @OnMessage
@@ -58,12 +66,20 @@ public class WebSocketChat {
         String roomId = sessionRoomMap.get(session);
         Set<Session> sessionsInRoom = roomSessionMap.get(roomId);
 
-        // 클라이언트로부터 받은 메시지를 로그에 기록
         logger.info("Message from client in room [{}]: {}", roomId, message);
 
         for (Session s : sessionsInRoom) {
             s.getBasicRemote().sendText(message);
         }
+
+        Date messageDate = new Date();
+
+        RoomDetail roomDetail = new RoomDetail();
+        roomDetail.setRoomId(roomId);
+        roomDetail.setMessage(message);
+        roomDetail.setMessageDate(messageDate);
+        roomDetailRepository.save(roomDetail);
+
     }
 
     @OnClose
