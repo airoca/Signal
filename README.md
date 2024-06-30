@@ -112,7 +112,7 @@
 
 Signal 보내기 버튼을 누르면, 해당 사용자에게 signal이 전송되게 됩니다. 사용자들의 signal 현황은 실시간으로 확인되는데, 서로 signal을 보낸 사용자는 별자리로 연결됩니다.
 
-—
+---
 
 7. **기술 스택**
 
@@ -136,3 +136,20 @@ Signal 보내기 버튼을 누르면, 해당 사용자에게 signal이 전송되
     -   aws ec2
     -   mysql
     -   docker
+
+---
+
+## API 명세
+
+| DESCRIPTION | METHOD | URI | REQUEST | RESPONSE |
+| --- | --- | --- | --- | --- |
+| 1) 모든 사용자 정보 반환 (화면 구성) | GET | /users | - | List<User> |
+| 2) 회원 가입 | POST | /register | {"id": "test8","password": "1234"} | User |
+| 3) 로그인 | POST | /login | {"id": "test8","password": "1234"} | User, JwtToken |
+| 4) 특정 사용자 정보 조회 | GET | /user/{id} | - | User |
+| 5) 사용자가 다른 사용자에게 시그널 보내기 | POST | /sendSignal | {"sendUser": "test8","receiveUser": "test6"} | - |
+| 6) 사용자가 다른 사용자에게 보낸 시그널 삭제 | POST | /deleteSignal | {"sendUser": "test8","receiveUser": "test6"} | - |
+| 7) 특정 사용자가 받은 모든 신호에 대한 User | GET | /signals/received/{id} | - | List<User> |
+| 8) 특정 사용자가 보낸 모든 신호에 대한 User | GET | /signals/sent/{id} | - | List<User> |
+| 9) 모든 연결 정보 반환 (화면 구성) | GET | /lines | - | List<DoubleSignalDTO> (6개의 x,y,z 좌표 정보만 반환) |
+
